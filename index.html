@@ -13,12 +13,61 @@
     .option-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
     .progress-bar { height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; background-color: #3b82f6; transition: width 0.25s ease; }
+
+    /* Simple transitions */
+    .fade-in { animation: fadeIn 400ms ease-out forwards; }
+    .fade-out { animation: fadeOut 350ms ease-in forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
+
+    /* Start animation bar */
+    .ready-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.25);
+      overflow: hidden;
+    }
+    .ready-fill {
+      height: 100%;
+      width: 0%;
+      background: rgba(255,255,255,0.9);
+      transition: width 3.2s linear;
+    }
+
+    /* Confetti */
+    .confetti-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .confetti {
+      position: absolute;
+      top: -12px;
+      width: 10px;
+      height: 14px;
+      opacity: 0.9;
+      transform: rotate(0deg);
+      animation: confettiFall 2.8s ease-in forwards;
+      border-radius: 3px;
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,.08));
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
+    }
+
+    /* Badge pulse */
+    .badge-pop { animation: badgePop 650ms cubic-bezier(.2,1.2,.2,1) forwards; }
+    @keyframes badgePop {
+      0% { transform: scale(.86); opacity: .0; }
+      55% { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center min-h-screen p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
-
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -78,225 +127,165 @@
     // QUESTIONS
     // ----------------------------
     const questions = [
-      {
-        s1: "I have a neighbour.",
-        s2: "He always helps people carry heavy bags.",
-        options: [
+      { s1:"I have a neighbour.", s2:"He always helps people carry heavy bags.",
+        options:[
           "I have a neighbour which always helps people carry heavy bags.",
           "I have a neighbour who always helps people carry heavy bags.",
           "I have a neighbour who he always helps people carry heavy bags."
         ],
-        correctIndex: 1,
-        explanation: "Use 'who' for people. Don't repeat the pronoun (NOT: 'who he')."
+        correctIndex:1, explanation:"Use 'who' for people. Don't repeat the pronoun (NOT: 'who he')."
       },
-      {
-        s1: "I can’t find the message.",
-        s2: "You sent it this morning.",
-        options: [
+      { s1:"I can’t find the message.", s2:"You sent it this morning.",
+        options:[
           "I can’t find the message who you sent this morning.",
           "I can’t find the message which you sent this morning.",
           "I can’t find the message which you sent it this morning."
         ],
-        correctIndex: 1,
-        explanation: "Use 'which' for things. Don’t repeat the object pronoun (NOT: 'sent it')."
+        correctIndex:1, explanation:"Use 'which' for things. Don’t repeat the object pronoun (NOT: 'sent it')."
       },
-      {
-        s1: "That’s the student.",
-        s2: "She asks the best questions in class.",
-        options: [
+      { s1:"That’s the student.", s2:"She asks the best questions in class.",
+        options:[
           "That’s the student which asks the best questions in class.",
           "That’s the student who asks the best questions in class.",
           "That’s the student who she asks the best questions in class."
         ],
-        correctIndex: 1,
-        explanation: "Use 'who' for people, and don’t repeat the subject (NOT: 'who she')."
+        correctIndex:1, explanation:"Use 'who' for people, and don’t repeat the subject (NOT: 'who she')."
       },
-      {
-        s1: "The café is usually full.",
-        s2: "We studied there last week.",
-        options: [
+      { s1:"The café is usually full.", s2:"We studied there last week.",
+        options:[
           "The café who we studied there last week is usually full.",
           "The café which we studied in last week is usually full.",
           "The café which we studied there last week is usually full."
         ],
-        correctIndex: 1,
-        explanation: "Use 'which' for places/things. In a relative clause, avoid 'there' here; use 'studied in'."
+        correctIndex:1, explanation:"Use 'which' for places/things. In a relative clause, avoid 'there' here; use 'studied in'."
       },
-      {
-        s1: "I spoke to a receptionist.",
-        s2: "She explained everything clearly.",
-        options: [
+      { s1:"I spoke to a receptionist.", s2:"She explained everything clearly.",
+        options:[
           "I spoke to a receptionist which explained everything clearly.",
           "I spoke to a receptionist who explained everything clearly.",
           "I spoke to a receptionist who she explained everything clearly."
         ],
-        correctIndex: 1,
-        explanation: "Receptionist = person → 'who'. Don’t repeat 'she'."
+        correctIndex:1, explanation:"Receptionist = person → 'who'. Don’t repeat 'she'."
       },
-      {
-        s1: "The shoes are uncomfortable.",
-        s2: "I wore them on Monday.",
-        options: [
+      { s1:"The shoes are uncomfortable.", s2:"I wore them on Monday.",
+        options:[
           "The shoes who I wore on Monday are uncomfortable.",
           "The shoes which I wore on Monday are uncomfortable.",
           "The shoes which I wore them on Monday are uncomfortable."
         ],
-        correctIndex: 1,
-        explanation: "Shoes = things → 'which'. Don’t repeat 'them'."
+        correctIndex:1, explanation:"Shoes = things → 'which'. Don’t repeat 'them'."
       },
-      {
-        s1: "We thanked the coach.",
-        s2: "He stayed after training to help us.",
-        options: [
+      { s1:"We thanked the coach.", s2:"He stayed after training to help us.",
+        options:[
           "We thanked the coach which stayed after training to help us.",
           "We thanked the coach who stayed after training to help us.",
           "We thanked the coach who he stayed after training to help us."
         ],
-        correctIndex: 1,
-        explanation: "Coach = person → 'who'. Don’t repeat 'he'."
+        correctIndex:1, explanation:"Coach = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1: "The documentary was amazing.",
-        s2: "We watched it in the lesson.",
-        options: [
+      { s1:"The documentary was amazing.", s2:"We watched it in the lesson.",
+        options:[
           "The documentary who we watched in the lesson was amazing.",
           "The documentary which we watched in the lesson was amazing.",
           "The documentary which we watched it in the lesson was amazing."
         ],
-        correctIndex: 1,
-        explanation: "Documentary = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Documentary = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1: "This is the friend.",
-        s2: "I told you about her yesterday.",
-        options: [
+      { s1:"This is the friend.", s2:"I told you about her yesterday.",
+        options:[
           "This is the friend which I told you about her yesterday.",
           "This is the friend who I told you about yesterday.",
           "This is the friend who I told you about her yesterday."
         ],
-        correctIndex: 1,
-        explanation: "Friend = person → 'who'. Don’t repeat 'her'."
+        correctIndex:1, explanation:"Friend = person → 'who'. Don’t repeat 'her'."
       },
-      {
-        s1: "The street is noisy at night.",
-        s2: "My grandparents live on it.",
-        options: [
+      { s1:"The street is noisy at night.", s2:"My grandparents live on it.",
+        options:[
           "The street who my grandparents live on is noisy at night.",
           "The street which my grandparents live on is noisy at night.",
           "The street which my grandparents live on it is noisy at night."
         ],
-        correctIndex: 1,
-        explanation: "Street = thing/place → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Street = thing/place → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1: "I know a driver.",
-        s2: "He never uses his phone while driving.",
-        options: [
+      { s1:"I know a driver.", s2:"He never uses his phone while driving.",
+        options:[
           "I know a driver which never uses his phone while driving.",
           "I know a driver who never uses his phone while driving.",
           "I know a driver who he never uses his phone while driving."
         ],
-        correctIndex: 1,
-        explanation: "Driver = person → 'who'. Don’t repeat 'he'."
+        correctIndex:1, explanation:"Driver = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1: "The app is very useful.",
-        s2: "It reminds me to drink water.",
-        options: [
+      { s1:"The app is very useful.", s2:"It reminds me to drink water.",
+        options:[
           "The app who reminds me to drink water is very useful.",
           "The app which reminds me to drink water is very useful.",
           "The app which it reminds me to drink water is very useful."
         ],
-        correctIndex: 1,
-        explanation: "App = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"App = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1: "That’s the manager.",
-        s2: "Everyone trusts him.",
-        options: [
+      { s1:"That’s the manager.", s2:"Everyone trusts him.",
+        options:[
           "That’s the manager which everyone trusts him.",
           "That’s the manager who everyone trusts.",
           "That’s the manager who everyone trusts him."
         ],
-        correctIndex: 1,
-        explanation: "Manager = person → 'who'. Don’t repeat 'him'."
+        correctIndex:1, explanation:"Manager = person → 'who'. Don’t repeat 'him'."
       },
-      {
-        s1: "The jacket is too small.",
-        s2: "I ordered it online.",
-        options: [
+      { s1:"The jacket is too small.", s2:"I ordered it online.",
+        options:[
           "The jacket who I ordered online is too small.",
           "The jacket which I ordered online is too small.",
           "The jacket which I ordered it online is too small."
         ],
-        correctIndex: 1,
-        explanation: "Jacket = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Jacket = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1: "I saw a woman.",
-        s2: "She was looking for her child.",
-        options: [
+      { s1:"I saw a woman.", s2:"She was looking for her child.",
+        options:[
           "I saw a woman which was looking for her child.",
           "I saw a woman who was looking for her child.",
           "I saw a woman who she was looking for her child."
         ],
-        correctIndex: 1,
-        explanation: "Woman = person → 'who'. Don’t repeat 'she'."
+        correctIndex:1, explanation:"Woman = person → 'who'. Don’t repeat 'she'."
       },
-      {
-        s1: "The room was too cold.",
-        s2: "We had the meeting there.",
-        options: [
+      { s1:"The room was too cold.", s2:"We had the meeting there.",
+        options:[
           "The room who we had the meeting there was too cold.",
           "The room which we had the meeting there was too cold.",
           "The room which we had the meeting in was too cold."
         ],
-        correctIndex: 2,
-        explanation: "Room = thing/place → 'which'. Use 'meeting in' (avoid 'there' in the relative clause)."
+        correctIndex:2, explanation:"Room = thing/place → 'which'. Use 'meeting in' (avoid 'there' in the relative clause)."
       },
-      {
-        s1: "He’s the scientist.",
-        s2: "He discovered a new medicine.",
-        options: [
+      { s1:"He’s the scientist.", s2:"He discovered a new medicine.",
+        options:[
           "He’s the scientist which discovered a new medicine.",
           "He’s the scientist who discovered a new medicine.",
           "He’s the scientist who he discovered a new medicine."
         ],
-        correctIndex: 1,
-        explanation: "Scientist = person → 'who'. Don’t repeat 'he'."
+        correctIndex:1, explanation:"Scientist = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1: "The photo looks great.",
-        s2: "You took it during the trip.",
-        options: [
+      { s1:"The photo looks great.", s2:"You took it during the trip.",
+        options:[
           "The photo who you took during the trip looks great.",
           "The photo which you took during the trip looks great.",
           "The photo which you took it during the trip looks great."
         ],
-        correctIndex: 1,
-        explanation: "Photo = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Photo = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1: "That’s the student.",
-        s2: "The teacher chose her for the team.",
-        options: [
+      { s1:"That’s the student.", s2:"The teacher chose her for the team.",
+        options:[
           "That’s the student which the teacher chose her for the team.",
           "That’s the student who the teacher chose for the team.",
           "That’s the student who the teacher chose her for the team."
         ],
-        correctIndex: 1,
-        explanation: "Student = person → 'who'. Don’t repeat 'her'."
+        correctIndex:1, explanation:"Student = person → 'who'. Don’t repeat 'her'."
       },
-      {
-        s1: "The chair is still wet.",
-        s2: "Someone cleaned it.",
-        options: [
+      { s1:"The chair is still wet.", s2:"Someone cleaned it.",
+        options:[
           "The chair who someone cleaned is still wet.",
           "The chair which someone cleaned is still wet.",
           "The chair which someone cleaned it is still wet."
         ],
-        correctIndex: 1,
-        explanation: "Chair = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Chair = thing → 'which'. Don’t repeat 'it'."
       }
     ];
 
@@ -307,7 +296,6 @@
     let score = 0;
     const userAnswers = new Array(questions.length).fill(null);
 
-    // login data
     let student = { name: "", group: "", level: "" };
 
     // ----------------------------
@@ -355,9 +343,10 @@
     function renderLogin() {
       setTestUIVisible(false);
       subtitle.textContent = "Login to start the test";
+      feedback.classList.add("hidden");
 
       questionContainer.innerHTML = `
-        <div class="max-w-xl mx-auto">
+        <div class="max-w-xl mx-auto fade-in">
           <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6">
             <div class="flex items-center mb-4">
               <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-3">
@@ -406,7 +395,7 @@
           </div>
 
           <p class="text-center text-sm text-gray-500 mt-4">
-            Tip: Use your real name for correct ranking and results.
+            Tip: Use your real name for accurate results.
           </p>
         </div>
       `;
@@ -417,7 +406,6 @@
       const levelEl = document.getElementById("studentLevel");
       const errEl = document.getElementById("loginError");
 
-      // Enter key support
       [nameEl, groupEl, levelEl].forEach(el => {
         el.addEventListener("keydown", (e) => {
           if (e.key === "Enter") startBtn.click();
@@ -438,17 +426,80 @@
         errEl.classList.add("hidden");
         student = { name, group, level };
 
-        // start test
-        subtitle.textContent = `Student: ${student.name} • ${student.group} • ${student.level}`;
-        setTestUIVisible(true);
-
+        // reset test state
         currentQuestion = 0;
         score = 0;
         userAnswers.fill(null);
         updateScoreDisplay();
-        renderQuestion();
-        feedback.classList.add("hidden");
+
+        subtitle.textContent = `Student: ${student.name} • ${student.group} • ${student.level}`;
+
+        // show start animation
+        renderStartAnimation();
       });
+    }
+
+    // ----------------------------
+    // START ANIMATION (Get Ready)
+    // ----------------------------
+    function renderStartAnimation() {
+      setTestUIVisible(false);
+      feedback.classList.add("hidden");
+
+      questionContainer.innerHTML = `
+        <div class="max-w-xl mx-auto fade-in">
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm opacity-90">Welcome,</div>
+                <div class="text-2xl font-bold">${escapeHtml(student.name)}</div>
+              </div>
+              <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
+                <i class="fas fa-bolt text-white text-xl"></i>
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <div class="text-lg font-semibold">Get ready…</div>
+              <div class="text-white/90 mt-1">The test is starting now.</div>
+            </div>
+
+            <div class="mt-6">
+              <div class="ready-bar">
+                <div class="ready-fill" id="readyFill"></div>
+              </div>
+              <div class="flex justify-between text-xs mt-2 text-white/80">
+                <span>${escapeHtml(student.group)} • ${escapeHtml(student.level)}</span>
+                <span>Loading…</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 bg-blue-50 border border-blue-100 rounded-2xl p-4">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                <i class="fas fa-lightbulb text-blue-600"></i>
+              </div>
+              <div class="text-gray-700">
+                <div class="font-semibold">Tip</div>
+                <div class="text-sm leading-relaxed">
+                  Use <span class="font-semibold">who</span> for people and <span class="font-semibold">which</span> for things.
+                  Avoid repeating pronouns like “who he” or “which it”.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // animate bar fill then start test
+      const fill = document.getElementById("readyFill");
+      requestAnimationFrame(() => { fill.style.width = "100%"; });
+
+      setTimeout(() => {
+        setTestUIVisible(true);
+        renderQuestion();
+      }, 3300);
     }
 
     // ----------------------------
@@ -459,7 +510,7 @@
       const answered = userAnswers[currentQuestion] !== null;
 
       let html = `
-        <div class="mb-6">
+        <div class="mb-6 fade-in">
           <div class="flex items-center mb-2">
             <div class="bg-blue-100 text-blue-800 font-semibold rounded-full w-8 h-8 flex items-center justify-center mr-3">
               ${currentQuestion + 1}
@@ -604,12 +655,55 @@
       }
     });
 
+    // ----------------------------
+    // FINISH PAGE (Rewarding)
+    // ----------------------------
+    function getPerformance(score, total) {
+      const pct = Math.round((score / total) * 100);
+      if (pct >= 90) return { title: "Legendary Grammar Master", icon: "fa-crown" };
+      if (pct >= 75) return { title: "Strong Performer", icon: "fa-medal" };
+      if (pct >= 60) return { title: "Solid Progress", icon: "fa-star" };
+      if (pct >= 45) return { title: "Good Effort", icon: "fa-thumbs-up" };
+      return { title: "Keep Going — You’ll Improve!", icon: "fa-seedling" };
+    }
+
     function getPraiseMessage(score) {
       if (score >= 18) return "Excellent! You understand relative clauses very well!";
       if (score >= 15) return "Very good! You know most of the rules.";
       if (score >= 12) return "Good job! You understand the basics.";
       if (score >= 9) return "Not bad! Review the explanations to improve.";
       return "Keep practicing! Review WHO/WHICH rules and pronoun repetition mistakes.";
+    }
+
+    function countCorrect() { return score; }
+    function countIncorrect() { return questions.length - score; }
+
+    function spawnConfetti() {
+      const wrap = document.querySelector(".confetti-wrap");
+      if (!wrap) return;
+
+      const pieces = 36;
+      for (let i = 0; i < pieces; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        // random position
+        c.style.left = Math.random() * 100 + "%";
+        // random delay
+        c.style.animationDelay = (Math.random() * 0.35) + "s";
+        // random size
+        const w = 8 + Math.random() * 10;
+        const h = 10 + Math.random() * 14;
+        c.style.width = w + "px";
+        c.style.height = h + "px";
+        // random color using HSL (no hardcoded palette)
+        const hue = Math.floor(Math.random() * 360);
+        c.style.background = `hsl(${hue} 85% 60%)`;
+
+        wrap.appendChild(c);
+
+        // cleanup
+        setTimeout(() => c.remove(), 3500);
+      }
     }
 
     async function sendResultsToServer() {
@@ -629,34 +723,67 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-      } catch (e) {
-        // Silent fail
-      }
+      } catch (e) { /* silent */ }
     }
 
     async function endTest() {
-      const percentage = Math.round((score / questions.length) * 100);
+      const total = questions.length;
+      const percentage = Math.round((score / total) * 100);
+      const perf = getPerformance(score, total);
 
       sendResultsToServer();
 
       const html = `
-        <div class="text-center py-8">
+        <div class="confetti-wrap text-center py-8 fade-in">
           <div class="mb-6">
-            <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <i class="fas fa-trophy text-white text-3xl"></i>
+            <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 badge-pop">
+              <i class="fas ${perf.icon} text-white text-3xl"></i>
             </div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Test Complete!</h2>
-            <p class="text-gray-600">Results saved for <span class="font-semibold">${student.name}</span>.</p>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Congratulations, ${escapeHtml(student.name)}!</h2>
+            <p class="text-gray-600">${escapeHtml(perf.title)}</p>
           </div>
 
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-md mx-auto mb-8">
-            <div class="text-base text-gray-700 mb-3">
-              <div><span class="font-semibold">Group:</span> ${student.group}</div>
-              <div><span class="font-semibold">Level:</span> ${student.level}</div>
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-2xl mx-auto mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+              <div class="bg-white rounded-xl border p-4">
+                <div class="text-sm text-gray-500">Group</div>
+                <div class="font-semibold text-gray-800">${escapeHtml(student.group)}</div>
+              </div>
+              <div class="bg-white rounded-xl border p-4">
+                <div class="text-sm text-gray-500">Level</div>
+                <div class="font-semibold text-gray-800">${escapeHtml(student.level)}</div>
+              </div>
+              <div class="bg-white rounded-xl border p-4">
+                <div class="text-sm text-gray-500">Result</div>
+                <div class="font-semibold text-gray-800">${score}/${total} (${percentage}%)</div>
+              </div>
             </div>
-            <div class="text-5xl font-bold text-blue-600 mb-2">${percentage}%</div>
-            <div class="text-xl font-semibold text-gray-800 mb-1">${score}/${questions.length} Correct</div>
-            <div class="text-lg text-blue-500 font-medium mb-4">${getPraiseMessage(score)}</div>
+
+            <div class="mt-6">
+              <div class="text-5xl font-bold text-blue-600 mb-2">${percentage}%</div>
+              <div class="text-lg text-blue-500 font-medium">${getPraiseMessage(score)}</div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-white rounded-xl border p-4 flex items-center justify-between">
+                <div>
+                  <div class="text-sm text-gray-500">Correct</div>
+                  <div class="text-2xl font-bold text-gray-800">${countCorrect()}</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <i class="fas fa-check text-green-600"></i>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl border p-4 flex items-center justify-between">
+                <div>
+                  <div class="text-sm text-gray-500">Incorrect</div>
+                  <div class="text-2xl font-bold text-gray-800">${countIncorrect()}</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <i class="fas fa-times text-red-600"></i>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -670,16 +797,23 @@
               <i class="fas fa-user mr-2"></i> New Student
             </button>
           </div>
+
+          <p class="text-sm text-gray-500 mt-4">
+            Keep going — your accuracy improves with practice.
+          </p>
         </div>
       `;
 
       questionContainer.innerHTML = html;
+
       prevBtn.style.display = "none";
       nextBtn.style.display = "none";
       feedback.classList.add("hidden");
 
+      // confetti burst
+      spawnConfetti();
+
       document.getElementById("backToLogin").addEventListener("click", () => {
-        // reset navigation visibility
         prevBtn.style.display = "";
         nextBtn.style.display = "";
         renderLogin();
@@ -687,10 +821,25 @@
     }
 
     // ----------------------------
-    // INIT: show login first
+    // ESCAPE HTML (safety)
+    // ----------------------------
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // ----------------------------
+    // INIT
     // ----------------------------
     updateScoreDisplay();
     renderLogin();
+
+    // hide test UI initially
+    setTestUIVisible(false);
   </script>
 </body>
 </html>
