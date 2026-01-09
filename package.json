@@ -1,0 +1,10 @@
+{
+  "name": "who-which-relative-clauses-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WHO/WHICH Relative Clauses Test (Vercel)",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  }
+}
