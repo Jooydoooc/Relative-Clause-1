@@ -18,17 +18,19 @@
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center min-h-screen p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
+
+    <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 class="text-2xl font-bold">WHO/WHICH Relative Clauses Test</h1>
-          <div class="flex items-center mt-2">
+          <div class="flex items-center mt-2 opacity-95">
             <i class="fas fa-graduation-cap mr-2"></i>
-            <span>Combine two sentences into one</span>
+            <span id="subtitle">English Grammar Assessment</span>
           </div>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3" id="stats-bar">
           <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
             <div class="text-sm">Score</div>
             <div class="text-xl font-bold" id="score">0/20</div>
@@ -40,7 +42,7 @@
         </div>
       </div>
 
-      <div class="mt-4">
+      <div class="mt-4" id="progress-wrap">
         <div class="flex justify-between text-sm mb-1">
           <span>Question <span id="current-question-num">1</span> of 20</span>
           <span id="progress-percent">5%</span>
@@ -51,12 +53,12 @@
       </div>
     </div>
 
+    <!-- Body -->
     <div class="p-6">
       <div id="question-container" class="mb-6"></div>
-
       <div id="feedback" class="mt-6 p-4 rounded-lg border hidden"></div>
 
-      <div class="flex flex-col sm:flex-row justify-between mt-8 gap-4">
+      <div class="flex flex-col sm:flex-row justify-between mt-8 gap-4" id="nav-buttons">
         <button id="prev-btn"
           class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-5 py-3 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           disabled>
@@ -72,7 +74,9 @@
   </div>
 
   <script>
-    // 20 natural / logical items, with ONE correct answer each (who=people, which=things).
+    // ----------------------------
+    // QUESTIONS
+    // ----------------------------
     const questions = [
       {
         s1: "I have a neighbour.",
@@ -296,12 +300,19 @@
       }
     ];
 
+    // ----------------------------
+    // STATE
+    // ----------------------------
     let currentQuestion = 0;
     let score = 0;
-
-    // store selected option index (0/1/2) per question
     const userAnswers = new Array(questions.length).fill(null);
 
+    // login data
+    let student = { name: "", group: "", level: "" };
+
+    // ----------------------------
+    // DOM
+    // ----------------------------
     const questionContainer = document.getElementById("question-container");
     const feedback = document.getElementById("feedback");
     const scoreDisplay = document.getElementById("score");
@@ -311,6 +322,19 @@
     const progressFill = document.getElementById("progress-fill");
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
+    const subtitle = document.getElementById("subtitle");
+    const statsBar = document.getElementById("stats-bar");
+    const progressWrap = document.getElementById("progress-wrap");
+    const navButtons = document.getElementById("nav-buttons");
+
+    // ----------------------------
+    // UI HELPERS
+    // ----------------------------
+    function setTestUIVisible(isVisible) {
+      statsBar.style.display = isVisible ? "flex" : "none";
+      progressWrap.style.display = isVisible ? "block" : "none";
+      navButtons.style.display = isVisible ? "flex" : "none";
+    }
 
     function updateScoreDisplay() {
       scoreDisplay.textContent = `${score}/${questions.length}`;
@@ -325,6 +349,111 @@
       progressFill.style.width = `${percent}%`;
     }
 
+    // ----------------------------
+    // LOGIN PAGE
+    // ----------------------------
+    function renderLogin() {
+      setTestUIVisible(false);
+      subtitle.textContent = "Login to start the test";
+
+      questionContainer.innerHTML = `
+        <div class="max-w-xl mx-auto">
+          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                <i class="fas fa-user text-blue-600 text-xl"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-800">Student Login</h2>
+                <p class="text-gray-600">Enter your details to begin.</p>
+              </div>
+            </div>
+
+            <div class="space-y-4 mt-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Student Name</label>
+                <input id="studentName" type="text" placeholder="e.g., Ali Karimov"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Group</label>
+                <input id="studentGroup" type="text" placeholder="e.g., Group A / IELTS_AGE 7PM"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Level</label>
+                <select id="studentLevel"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white">
+                  <option value="">Select level</option>
+                  <option>Beginner</option>
+                  <option>Elementary</option>
+                  <option>Pre-Intermediate</option>
+                  <option>Intermediate</option>
+                  <option>Upper-Intermediate</option>
+                  <option>IELTS / Advanced</option>
+                </select>
+              </div>
+
+              <div id="loginError" class="hidden p-3 rounded-xl border bg-red-50 border-red-200 text-red-700 text-sm"></div>
+
+              <button id="startBtn"
+                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl transition duration-200 flex items-center justify-center">
+                Start Test <i class="fas fa-play ml-2"></i>
+              </button>
+            </div>
+          </div>
+
+          <p class="text-center text-sm text-gray-500 mt-4">
+            Tip: Use your real name for correct ranking and results.
+          </p>
+        </div>
+      `;
+
+      const startBtn = document.getElementById("startBtn");
+      const nameEl = document.getElementById("studentName");
+      const groupEl = document.getElementById("studentGroup");
+      const levelEl = document.getElementById("studentLevel");
+      const errEl = document.getElementById("loginError");
+
+      // Enter key support
+      [nameEl, groupEl, levelEl].forEach(el => {
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") startBtn.click();
+        });
+      });
+
+      startBtn.addEventListener("click", () => {
+        const name = (nameEl.value || "").trim();
+        const group = (groupEl.value || "").trim();
+        const level = (levelEl.value || "").trim();
+
+        if (!name || !group || !level) {
+          errEl.textContent = "Please fill in Student Name, Group, and Level.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        errEl.classList.add("hidden");
+        student = { name, group, level };
+
+        // start test
+        subtitle.textContent = `Student: ${student.name} • ${student.group} • ${student.level}`;
+        setTestUIVisible(true);
+
+        currentQuestion = 0;
+        score = 0;
+        userAnswers.fill(null);
+        updateScoreDisplay();
+        renderQuestion();
+        feedback.classList.add("hidden");
+      });
+    }
+
+    // ----------------------------
+    // TEST RENDER
+    // ----------------------------
     function renderQuestion() {
       const q = questions[currentQuestion];
       const answered = userAnswers[currentQuestion] !== null;
@@ -377,9 +506,7 @@
         `;
       });
 
-      html += `
-          </div>
-      `;
+      html += `</div>`;
 
       if (answered) {
         html += `
@@ -396,7 +523,6 @@
       html += `</div>`;
       questionContainer.innerHTML = html;
 
-      // attach listeners (safe + mobile-friendly)
       const optionsEl = document.getElementById("options");
       optionsEl.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-option-index]");
@@ -487,10 +613,10 @@
     }
 
     async function sendResultsToServer() {
-      // Optional: send to Vercel API. If API env vars are set, it can forward to Telegram.
       try {
         const payload = {
           test: "WHO/WHICH Relative Clauses",
+          student,
           score,
           total: questions.length,
           percentage: Math.round((score / questions.length) * 100),
@@ -504,14 +630,13 @@
           body: JSON.stringify(payload)
         });
       } catch (e) {
-        // Silent fail - test should work even without backend
+        // Silent fail
       }
     }
 
     async function endTest() {
       const percentage = Math.round((score / questions.length) * 100);
 
-      // fire-and-forget
       sendResultsToServer();
 
       const html = `
@@ -521,19 +646,30 @@
               <i class="fas fa-trophy text-white text-3xl"></i>
             </div>
             <h2 class="text-3xl font-bold text-gray-800 mb-2">Test Complete!</h2>
-            <p class="text-gray-600">You’ve finished the WHO/WHICH Relative Clauses test.</p>
+            <p class="text-gray-600">Results saved for <span class="font-semibold">${student.name}</span>.</p>
           </div>
 
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-md mx-auto mb-8">
+            <div class="text-base text-gray-700 mb-3">
+              <div><span class="font-semibold">Group:</span> ${student.group}</div>
+              <div><span class="font-semibold">Level:</span> ${student.level}</div>
+            </div>
             <div class="text-5xl font-bold text-blue-600 mb-2">${percentage}%</div>
             <div class="text-xl font-semibold text-gray-800 mb-1">${score}/${questions.length} Correct</div>
             <div class="text-lg text-blue-500 font-medium mb-4">${getPraiseMessage(score)}</div>
           </div>
 
-          <button onclick="location.reload()"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center mx-auto">
-            <i class="fas fa-sync-alt mr-2"></i> Restart Test
-          </button>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="location.reload()"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center">
+              <i class="fas fa-sync-alt mr-2"></i> Restart Test
+            </button>
+
+            <button id="backToLogin"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center">
+              <i class="fas fa-user mr-2"></i> New Student
+            </button>
+          </div>
         </div>
       `;
 
@@ -541,11 +677,20 @@
       prevBtn.style.display = "none";
       nextBtn.style.display = "none";
       feedback.classList.add("hidden");
+
+      document.getElementById("backToLogin").addEventListener("click", () => {
+        // reset navigation visibility
+        prevBtn.style.display = "";
+        nextBtn.style.display = "";
+        renderLogin();
+      });
     }
 
-    // init
+    // ----------------------------
+    // INIT: show login first
+    // ----------------------------
     updateScoreDisplay();
-    renderQuestion();
+    renderLogin();
   </script>
 </body>
 </html>
