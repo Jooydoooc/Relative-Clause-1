@@ -6,13 +6,17 @@ export default async function handler(req, res) {
   try {
     const data = req.body || {};
     const student = data.student || {};
-    const { test, score, total, percentage, timestamp } = data;
 
-    const safeTest = String(test || "Test");
-    const safeScore = Number.isFinite(score) ? score : 0;
-    const safeTotal = Number.isFinite(total) ? total : 0;
-    const safePct = Number.isFinite(percentage) ? percentage : 0;
-    const safeTime = String(timestamp || new Date().toISOString());
+    const test = String(data.test || "Test");
+    const score = Number.isFinite(data.score) ? data.score : 0;
+    const total = Number.isFinite(data.total) ? data.total : 0;
+    const percentage = Number.isFinite(data.percentage) ? data.percentage : 0;
+
+    const forced = !!data.forced_submit;
+    const violations = Number.isFinite(data.violations) ? data.violations : 0;
+    const expired = Number.isFinite(data.expired_count) ? data.expired_count : 0;
+
+    const ts = String(data.timestamp || new Date().toISOString());
 
     const name = String(student.name || "Unknown");
     const group = String(student.group || "Unknown");
@@ -23,9 +27,12 @@ export default async function handler(req, res) {
       `👤 Student: ${name}\n` +
       `👥 Group: ${group}\n` +
       `📚 Level: ${level}\n` +
-      `📘 Test: ${safeTest}\n` +
-      `🎯 Score: ${safeScore}/${safeTotal} (${safePct}%)\n` +
-      `🕒 Time: ${safeTime}`;
+      `📘 Test: ${test}\n` +
+      `🎯 Score: ${score}/${total} (${percentage}%)\n` +
+      `⏱ Timeouts: ${expired}\n` +
+      `🚫 Violations: ${violations}\n` +
+      `⚠ Forced submit: ${forced ? "YES" : "NO"}\n` +
+      `🕒 Time: ${ts}`;
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
