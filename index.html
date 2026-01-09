@@ -14,31 +14,14 @@
     .progress-bar { height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; background-color: #3b82f6; transition: width 0.25s ease; }
 
-    /* Simple transitions */
     .fade-in { animation: fadeIn 400ms ease-out forwards; }
-    .fade-out { animation: fadeOut 350ms ease-in forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
 
-    /* Start animation bar */
-    .ready-bar {
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.25);
-      overflow: hidden;
-    }
-    .ready-fill {
-      height: 100%;
-      width: 0%;
-      background: rgba(255,255,255,0.9);
-      transition: width 3.2s linear;
-    }
+    .ready-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,0.25); overflow: hidden; }
+    .ready-fill { height: 100%; width: 0%; background: rgba(255,255,255,0.9); transition: width 3.2s linear; }
 
     /* Confetti */
-    .confetti-wrap {
-      position: relative;
-      overflow: hidden;
-    }
+    .confetti-wrap { position: relative; overflow: hidden; }
     .confetti {
       position: absolute;
       top: -12px;
@@ -56,7 +39,6 @@
       100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
     }
 
-    /* Badge pulse */
     .badge-pop { animation: badgePop 650ms cubic-bezier(.2,1.2,.2,1) forwards; }
     @keyframes badgePop {
       0% { transform: scale(.86); opacity: .0; }
@@ -79,14 +61,25 @@
           </div>
         </div>
 
-        <div class="flex items-center space-x-3" id="stats-bar">
+        <div class="flex flex-wrap items-center gap-3 justify-end" id="stats-bar">
           <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
             <div class="text-sm">Score</div>
             <div class="text-xl font-bold" id="score">0/20</div>
           </div>
+
           <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
             <div class="text-sm">Progress</div>
             <div class="text-xl font-bold" id="progress">1/20</div>
+          </div>
+
+          <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
+            <div class="text-sm">Time</div>
+            <div class="text-xl font-bold" id="timer">--</div>
+          </div>
+
+          <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
+            <div class="text-sm">Violations</div>
+            <div class="text-xl font-bold" id="violations">0</div>
           </div>
         </div>
       </div>
@@ -122,7 +115,47 @@
     </div>
   </div>
 
+  <!-- Violation Overlay -->
+  <div id="violationOverlay" class="fixed inset-0 hidden items-center justify-center p-4 z-50">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 fade-in">
+      <div class="flex items-start gap-3">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+          <i class="fas fa-triangle-exclamation text-red-600 text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-800">Violation Detected</h3>
+          <p class="text-gray-600 mt-1" id="violationReason">You switched the screen.</p>
+
+          <div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-red-700">
+                Violations: <span class="font-bold" id="violationCountText">1</span> /
+                <span class="font-bold" id="violationMaxText">3</span>
+              </div>
+              <div class="text-sm text-gray-600" id="violationNote">
+                Please stay on the test page.
+              </div>
+            </div>
+          </div>
+
+          <button id="violationOkBtn"
+            class="mt-5 w-full bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl transition duration-200">
+            I Understand
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ----------------------------
+    // CONFIG
+    // ----------------------------
+    const TIME_PER_QUESTION = 20;     // seconds
+    const MAX_VIOLATIONS = 3;         // auto-submit after this
+    const VIOLATION_COOLDOWN_MS = 1500;
+
     // ----------------------------
     // QUESTIONS
     // ----------------------------
@@ -294,9 +327,25 @@
     // ----------------------------
     let currentQuestion = 0;
     let score = 0;
-    const userAnswers = new Array(questions.length).fill(null);
+
+    // per-question state
+    // selectedIndex: 0/1/2 or null
+    // expired: boolean
+    // timeSpent: number
+    const qState = questions.map(() => ({ selectedIndex: null, expired: false, timeSpent: 0 }));
+
+    // timer state
+    let timerInterval = null;
+    let timeLeft = TIME_PER_QUESTION;
+
+    // violations
+    let violations = 0;
+    let lastViolationAt = 0;
+    const violationLog = []; // {reason, ts}
 
     let student = { name: "", group: "", level: "" };
+    let testStarted = false;
+    let testFinished = false;
 
     // ----------------------------
     // DOM
@@ -314,6 +363,18 @@
     const statsBar = document.getElementById("stats-bar");
     const progressWrap = document.getElementById("progress-wrap");
     const navButtons = document.getElementById("nav-buttons");
+    const timerEl = document.getElementById("timer");
+    const violationsEl = document.getElementById("violations");
+
+    // overlay
+    const violationOverlay = document.getElementById("violationOverlay");
+    const violationReasonEl = document.getElementById("violationReason");
+    const violationCountText = document.getElementById("violationCountText");
+    const violationMaxText = document.getElementById("violationMaxText");
+    const violationOkBtn = document.getElementById("violationOkBtn");
+    const violationNote = document.getElementById("violationNote");
+
+    violationMaxText.textContent = String(MAX_VIOLATIONS);
 
     // ----------------------------
     // UI HELPERS
@@ -337,13 +398,165 @@
       progressFill.style.width = `${percent}%`;
     }
 
+    function updateTimerUI() {
+      timerEl.textContent = `${timeLeft}s`;
+      // quick warning style (no custom colors; keep Tailwind background)
+      if (timeLeft <= 5) {
+        timerEl.parentElement.classList.add("ring-2", "ring-white/60");
+      } else {
+        timerEl.parentElement.classList.remove("ring-2", "ring-white/60");
+      }
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function startTimerIfNeeded() {
+      stopTimer();
+
+      if (!testStarted || testFinished) return;
+
+      const st = qState[currentQuestion];
+      if (st.selectedIndex !== null || st.expired) {
+        // no timer needed
+        timeLeft = Math.max(0, TIME_PER_QUESTION - st.timeSpent);
+        if (st.expired) timeLeft = 0;
+        updateTimerUI();
+        return;
+      }
+
+      // reset timeLeft for this question (fresh)
+      // If the student navigates back to an unanswered question, we keep remaining timeSpent.
+      timeLeft = Math.max(0, TIME_PER_QUESTION - st.timeSpent);
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        if (violationOverlay.classList.contains("hidden") === false) return; // pause while overlay is open
+        if (!testStarted || testFinished) return;
+
+        // spend time
+        st.timeSpent += 1;
+        timeLeft = Math.max(0, TIME_PER_QUESTION - st.timeSpent);
+        updateTimerUI();
+
+        if (timeLeft <= 0) {
+          stopTimer();
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function handleTimeout() {
+      const st = qState[currentQuestion];
+      if (st.selectedIndex !== null || st.expired) return;
+
+      st.expired = true;
+      // show feedback and lock options
+      renderQuestion();
+      showFeedback(false, "Time is up! Move to the next question.");
+      // allow next
+      nextBtn.disabled = false;
+    }
+
+    function updateViolationsUI() {
+      violationsEl.textContent = String(violations);
+    }
+
+    // ----------------------------
+    // VIOLATIONS
+    // ----------------------------
+    function showViolationOverlay(reason) {
+      violationReasonEl.textContent = reason;
+      violationCountText.textContent = String(violations);
+
+      if (violations >= MAX_VIOLATIONS) {
+        violationNote.textContent = "Test will be submitted now.";
+        violationOkBtn.textContent = "Submit";
+      } else {
+        violationNote.textContent = "Please stay on the test page.";
+        violationOkBtn.textContent = "I Understand";
+      }
+
+      violationOverlay.classList.remove("hidden");
+      violationOverlay.classList.add("flex");
+      stopTimer(); // pause timer when overlay is open
+    }
+
+    function hideViolationOverlay() {
+      violationOverlay.classList.add("hidden");
+      violationOverlay.classList.remove("flex");
+      // resume timer if needed
+      startTimerIfNeeded();
+    }
+
+    function registerViolation(reason) {
+      if (!testStarted || testFinished) return;
+
+      const now = Date.now();
+      if (now - lastViolationAt < VIOLATION_COOLDOWN_MS) return;
+      lastViolationAt = now;
+
+      violations += 1;
+      violationLog.push({ reason, ts: new Date().toISOString() });
+      updateViolationsUI();
+
+      showViolationOverlay(reason);
+
+      if (violations >= MAX_VIOLATIONS) {
+        // auto-submit quickly after showing overlay
+        setTimeout(() => {
+          // in case user clicks "Submit" earlier
+          if (!testFinished) endTest(true);
+        }, 700);
+      }
+    }
+
+    // Detect "switching screen"
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) registerViolation("You switched the screen / left the tab.");
+    });
+
+    window.addEventListener("blur", () => {
+      // blur can happen for lots of reasons; still count as violation after test start
+      registerViolation("You left the test window (focus lost).");
+    });
+
+    window.addEventListener("pagehide", () => {
+      registerViolation("You left the page.");
+    });
+
+    // Optional: prevent copy (not requested, but can be useful)
+    document.addEventListener("copy", (e) => {
+      if (!testStarted || testFinished) return;
+      e.preventDefault();
+      registerViolation("Copy action detected.");
+    });
+
+    violationOkBtn.addEventListener("click", () => {
+      if (violations >= MAX_VIOLATIONS) {
+        endTest(true);
+      } else {
+        hideViolationOverlay();
+      }
+    });
+
     // ----------------------------
     // LOGIN PAGE
     // ----------------------------
     function renderLogin() {
+      testStarted = false;
+      testFinished = false;
+      stopTimer();
+
       setTestUIVisible(false);
       subtitle.textContent = "Login to start the test";
       feedback.classList.add("hidden");
+      timerEl.textContent = "--";
+      violations = 0;
+      violationLog.length = 0;
+      updateViolationsUI();
 
       questionContainer.innerHTML = `
         <div class="max-w-xl mx-auto fade-in">
@@ -395,7 +608,7 @@
           </div>
 
           <p class="text-center text-sm text-gray-500 mt-4">
-            Tip: Use your real name for accurate results.
+            Tip: Don’t switch apps or tabs during the test.
           </p>
         </div>
       `;
@@ -429,18 +642,16 @@
         // reset test state
         currentQuestion = 0;
         score = 0;
-        userAnswers.fill(null);
+        questions.forEach((_, i) => qState[i] = { selectedIndex: null, expired: false, timeSpent: 0 });
         updateScoreDisplay();
 
         subtitle.textContent = `Student: ${student.name} • ${student.group} • ${student.level}`;
-
-        // show start animation
         renderStartAnimation();
       });
     }
 
     // ----------------------------
-    // START ANIMATION (Get Ready)
+    // START ANIMATION
     // ----------------------------
     function renderStartAnimation() {
       setTestUIVisible(false);
@@ -461,7 +672,7 @@
 
             <div class="mt-5">
               <div class="text-lg font-semibold">Get ready…</div>
-              <div class="text-white/90 mt-1">The test is starting now.</div>
+              <div class="text-white/90 mt-1">Each question has <span class="font-bold">${TIME_PER_QUESTION}s</span>.</div>
             </div>
 
             <div class="mt-6">
@@ -470,7 +681,7 @@
               </div>
               <div class="flex justify-between text-xs mt-2 text-white/80">
                 <span>${escapeHtml(student.group)} • ${escapeHtml(student.level)}</span>
-                <span>Loading…</span>
+                <span>Starting…</span>
               </div>
             </div>
           </div>
@@ -478,13 +689,12 @@
           <div class="mt-4 bg-blue-50 border border-blue-100 rounded-2xl p-4">
             <div class="flex items-start gap-3">
               <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <i class="fas fa-lightbulb text-blue-600"></i>
+                <i class="fas fa-shield-halved text-blue-600"></i>
               </div>
               <div class="text-gray-700">
-                <div class="font-semibold">Tip</div>
+                <div class="font-semibold">Rules</div>
                 <div class="text-sm leading-relaxed">
-                  Use <span class="font-semibold">who</span> for people and <span class="font-semibold">which</span> for things.
-                  Avoid repeating pronouns like “who he” or “which it”.
+                  Don’t switch tabs/apps. Each switch counts as a violation. After <b>${MAX_VIOLATIONS}</b> violations, the test is submitted.
                 </div>
               </div>
             </div>
@@ -492,11 +702,11 @@
         </div>
       `;
 
-      // animate bar fill then start test
       const fill = document.getElementById("readyFill");
       requestAnimationFrame(() => { fill.style.width = "100%"; });
 
       setTimeout(() => {
+        testStarted = true;
         setTestUIVisible(true);
         renderQuestion();
       }, 3300);
@@ -507,15 +717,21 @@
     // ----------------------------
     function renderQuestion() {
       const q = questions[currentQuestion];
-      const answered = userAnswers[currentQuestion] !== null;
+      const st = qState[currentQuestion];
+      const answered = st.selectedIndex !== null || st.expired;
 
       let html = `
         <div class="mb-6 fade-in">
-          <div class="flex items-center mb-2">
-            <div class="bg-blue-100 text-blue-800 font-semibold rounded-full w-8 h-8 flex items-center justify-center mr-3">
-              ${currentQuestion + 1}
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center">
+              <div class="bg-blue-100 text-blue-800 font-semibold rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                ${currentQuestion + 1}
+              </div>
+              <h2 class="text-xl font-bold text-gray-800">Combine the Sentences</h2>
             </div>
-            <h2 class="text-xl font-bold text-gray-800">Combine the Sentences</h2>
+            <div class="text-sm text-gray-500">
+              Time: <span class="font-semibold">${Math.max(0, TIME_PER_QUESTION - st.timeSpent)}s</span>
+            </div>
           </div>
 
           <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 mb-6">
@@ -530,7 +746,7 @@
 
       q.options.forEach((text, idx) => {
         const isCorrect = idx === q.correctIndex;
-        const isUser = userAnswers[currentQuestion] === idx;
+        const isUser = st.selectedIndex === idx;
 
         let optionClass = "p-4 border-2 rounded-xl transition duration-200 w-full text-left ";
         if (!answered) {
@@ -559,6 +775,18 @@
 
       html += `</div>`;
 
+      if (st.expired) {
+        html += `
+          <div class="mt-4 p-4 rounded-xl border bg-yellow-50 border-yellow-200">
+            <div class="flex items-center gap-2 text-yellow-800 font-semibold">
+              <i class="fas fa-clock"></i>
+              Time’s up for this question.
+            </div>
+            <div class="text-yellow-700 text-sm mt-1">You didn’t answer within ${TIME_PER_QUESTION} seconds.</div>
+          </div>
+        `;
+      }
+
       if (answered) {
         html += `
           <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
@@ -582,20 +810,26 @@
         selectOption(idx);
       });
 
+      // Navigation
+      // Prev is allowed ONLY if previous question exists and current question is answered/expired (prevents avoiding timer by going back and forth)
       prevBtn.disabled = currentQuestion === 0;
+
       nextBtn.textContent = currentQuestion === questions.length - 1 ? "Submit Test" : "Next Question";
-      nextBtn.disabled = userAnswers[currentQuestion] === null;
+      nextBtn.disabled = !(st.selectedIndex !== null || st.expired);
 
       updateProgressDisplay();
+      startTimerIfNeeded();
     }
 
     function selectOption(idx) {
-      if (userAnswers[currentQuestion] !== null) return;
+      const st = qState[currentQuestion];
+      if (st.selectedIndex !== null || st.expired) return;
 
-      userAnswers[currentQuestion] = idx;
+      st.selectedIndex = idx;
+      stopTimer();
+
       const q = questions[currentQuestion];
       const isCorrect = idx === q.correctIndex;
-
       if (isCorrect) score++;
 
       updateScoreDisplay();
@@ -640,23 +874,25 @@
     prevBtn.addEventListener("click", () => {
       if (currentQuestion > 0) {
         currentQuestion--;
-        renderQuestion();
         feedback.classList.add("hidden");
+        renderQuestion();
       }
     });
 
     nextBtn.addEventListener("click", () => {
+      if (!testStarted || testFinished) return;
+
       if (currentQuestion < questions.length - 1) {
         currentQuestion++;
-        renderQuestion();
         feedback.classList.add("hidden");
+        renderQuestion();
       } else {
-        endTest();
+        endTest(false);
       }
     });
 
     // ----------------------------
-    // FINISH PAGE (Rewarding)
+    // FINISH PAGE
     // ----------------------------
     function getPerformance(score, total) {
       const pct = Math.round((score / total) * 100);
@@ -675,9 +911,6 @@
       return "Keep practicing! Review WHO/WHICH rules and pronoun repetition mistakes.";
     }
 
-    function countCorrect() { return score; }
-    function countIncorrect() { return questions.length - score; }
-
     function spawnConfetti() {
       const wrap = document.querySelector(".confetti-wrap");
       if (!wrap) return;
@@ -686,38 +919,26 @@
       for (let i = 0; i < pieces; i++) {
         const c = document.createElement("div");
         c.className = "confetti";
-        // random position
         c.style.left = Math.random() * 100 + "%";
-        // random delay
         c.style.animationDelay = (Math.random() * 0.35) + "s";
-        // random size
         const w = 8 + Math.random() * 10;
         const h = 10 + Math.random() * 14;
         c.style.width = w + "px";
         c.style.height = h + "px";
-        // random color using HSL (no hardcoded palette)
         const hue = Math.floor(Math.random() * 360);
         c.style.background = `hsl(${hue} 85% 60%)`;
 
         wrap.appendChild(c);
-
-        // cleanup
         setTimeout(() => c.remove(), 3500);
       }
     }
 
-    async function sendResultsToServer() {
-      try {
-        const payload = {
-          test: "WHO/WHICH Relative Clauses",
-          student,
-          score,
-          total: questions.length,
-          percentage: Math.round((score / questions.length) * 100),
-          answers: userAnswers,
-          timestamp: new Date().toISOString()
-        };
+    function countExpired() {
+      return qState.filter(q => q.expired).length;
+    }
 
+    async function sendResultsToServer(payload) {
+      try {
         await fetch("/api/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -726,12 +947,44 @@
       } catch (e) { /* silent */ }
     }
 
-    async function endTest() {
+    async function endTest(forced) {
+      if (testFinished) return;
+      testFinished = true;
+      stopTimer();
+
+      // hide overlay if open
+      hideViolationOverlay();
+
       const total = questions.length;
       const percentage = Math.round((score / total) * 100);
       const perf = getPerformance(score, total);
 
-      sendResultsToServer();
+      const payload = {
+        test: "WHO/WHICH Relative Clauses",
+        student,
+        score,
+        total,
+        percentage,
+        forced_submit: !!forced,
+        violations,
+        violationLog,
+        expired_count: countExpired(),
+        question_state: qState,
+        timestamp: new Date().toISOString()
+      };
+
+      sendResultsToServer(payload);
+
+      const forcedNote = forced
+        ? `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-left">
+             <div class="font-semibold text-red-800 flex items-center gap-2">
+               <i class="fas fa-shield-halved"></i> Submitted due to violations
+             </div>
+             <div class="text-sm text-red-700 mt-1">
+               Violations: <b>${violations}</b> / ${MAX_VIOLATIONS}
+             </div>
+           </div>`
+        : "";
 
       const html = `
         <div class="confetti-wrap text-center py-8 fade-in">
@@ -739,12 +992,12 @@
             <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 badge-pop">
               <i class="fas ${perf.icon} text-white text-3xl"></i>
             </div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Congratulations, ${escapeHtml(student.name)}!</h2>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Well done, ${escapeHtml(student.name)}!</h2>
             <p class="text-gray-600">${escapeHtml(perf.title)}</p>
           </div>
 
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-2xl mx-auto mb-8">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-2xl mx-auto mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-left">
               <div class="bg-white rounded-xl border p-4">
                 <div class="text-sm text-gray-500">Group</div>
                 <div class="font-semibold text-gray-800">${escapeHtml(student.group)}</div>
@@ -754,36 +1007,22 @@
                 <div class="font-semibold text-gray-800">${escapeHtml(student.level)}</div>
               </div>
               <div class="bg-white rounded-xl border p-4">
-                <div class="text-sm text-gray-500">Result</div>
-                <div class="font-semibold text-gray-800">${score}/${total} (${percentage}%)</div>
+                <div class="text-sm text-gray-500">Violations</div>
+                <div class="font-semibold text-gray-800">${violations}</div>
+              </div>
+              <div class="bg-white rounded-xl border p-4">
+                <div class="text-sm text-gray-500">Timeouts</div>
+                <div class="font-semibold text-gray-800">${countExpired()}</div>
               </div>
             </div>
 
             <div class="mt-6">
               <div class="text-5xl font-bold text-blue-600 mb-2">${percentage}%</div>
+              <div class="text-xl font-semibold text-gray-800 mb-1">${score}/${total} Correct</div>
               <div class="text-lg text-blue-500 font-medium">${getPraiseMessage(score)}</div>
             </div>
 
-            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="bg-white rounded-xl border p-4 flex items-center justify-between">
-                <div>
-                  <div class="text-sm text-gray-500">Correct</div>
-                  <div class="text-2xl font-bold text-gray-800">${countCorrect()}</div>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <i class="fas fa-check text-green-600"></i>
-                </div>
-              </div>
-              <div class="bg-white rounded-xl border p-4 flex items-center justify-between">
-                <div>
-                  <div class="text-sm text-gray-500">Incorrect</div>
-                  <div class="text-2xl font-bold text-gray-800">${countIncorrect()}</div>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <i class="fas fa-times text-red-600"></i>
-                </div>
-              </div>
-            </div>
+            ${forcedNote}
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -799,19 +1038,18 @@
           </div>
 
           <p class="text-sm text-gray-500 mt-4">
-            Keep going — your accuracy improves with practice.
+            Tip: Practice relative clauses and avoid repeating pronouns.
           </p>
         </div>
       `;
 
       questionContainer.innerHTML = html;
-
       prevBtn.style.display = "none";
       nextBtn.style.display = "none";
       feedback.classList.add("hidden");
 
-      // confetti burst
-      spawnConfetti();
+      // Reward only if not forced submit
+      if (!forced) spawnConfetti();
 
       document.getElementById("backToLogin").addEventListener("click", () => {
         prevBtn.style.display = "";
@@ -821,7 +1059,7 @@
     }
 
     // ----------------------------
-    // ESCAPE HTML (safety)
+    // SAFETY
     // ----------------------------
     function escapeHtml(str) {
       return String(str || "")
@@ -836,10 +1074,9 @@
     // INIT
     // ----------------------------
     updateScoreDisplay();
-    renderLogin();
-
-    // hide test UI initially
+    updateViolationsUI();
     setTestUIVisible(false);
+    renderLogin();
   </script>
 </body>
 </html>
