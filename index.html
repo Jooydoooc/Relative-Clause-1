@@ -155,286 +155,223 @@
     const VIOLATION_COOLDOWN_MS = 1500;
 
     // ----------------------------
-    // BASE QUESTIONS (logical content)
-    // NOTE: correctIndex points to the correct option in THIS base list.
-    // We will RANDOMIZE options per question at test start, so correct letters won't all be B.
+    // QUESTIONS
+    // ✅ Correct answers are spread across A/B/C (NOT always B).
+    // correctIndex: 0=A, 1=B, 2=C
     // ----------------------------
-    const baseQuestions = [
-      {
-        s1:"I have a neighbour.", s2:"He always helps people carry heavy bags.",
+    const questions = [
+      // 1: correct = C
+      { s1:"I have a neighbour.", s2:"He always helps people carry heavy bags.",
         options:[
           "I have a neighbour which always helps people carry heavy bags.",
-          "I have a neighbour who always helps people carry heavy bags.",
-          "I have a neighbour who he always helps people carry heavy bags."
+          "I have a neighbour who he always helps people carry heavy bags.",
+          "I have a neighbour who always helps people carry heavy bags."
         ],
-        correctIndex: 1,
-        explanation:"Use 'who' for people. Don't repeat the pronoun (NOT: 'who he')."
+        correctIndex:2, explanation:"Use 'who' for people. Don't repeat the pronoun (NOT: 'who he')."
       },
-      {
-        s1:"I can’t find the message.", s2:"You sent it this morning.",
+
+      // 2: correct = A
+      { s1:"I can’t find the message.", s2:"You sent it this morning.",
         options:[
-          "I can’t find the message who you sent this morning.",
           "I can’t find the message which you sent this morning.",
+          "I can’t find the message who you sent this morning.",
           "I can’t find the message which you sent it this morning."
         ],
-        correctIndex: 1,
-        explanation:"Use 'which' for things. Don’t repeat the object pronoun (NOT: 'sent it')."
+        correctIndex:0, explanation:"Use 'which' for things. Don’t repeat the object pronoun (NOT: 'sent it')."
       },
-      {
-        s1:"That’s the student.", s2:"She asks the best questions in class.",
+
+      // 3: correct = B
+      { s1:"That’s the student.", s2:"She asks the best questions in class.",
         options:[
-          "That’s the student which asks the best questions in class.",
+          "That’s the student who she asks the best questions in class.",
           "That’s the student who asks the best questions in class.",
-          "That’s the student who she asks the best questions in class."
+          "That’s the student which asks the best questions in class."
         ],
-        correctIndex: 1,
-        explanation:"Use 'who' for people, and don’t repeat the subject (NOT: 'who she')."
+        correctIndex:1, explanation:"Use 'who' for people. Don’t repeat the subject (NOT: 'who she')."
       },
-      {
-        s1:"The café is usually full.", s2:"We studied there last week.",
+
+      // 4: correct = A
+      { s1:"The café is usually full.", s2:"We studied there last week.",
         options:[
-          "The café who we studied there last week is usually full.",
           "The café which we studied in last week is usually full.",
-          "The café which we studied there last week is usually full."
+          "The café which we studied there last week is usually full.",
+          "The café who we studied there last week is usually full."
         ],
-        correctIndex: 1,
-        explanation:"Use 'which' for things/places. Better: 'the café which we studied in'."
+        correctIndex:0, explanation:"Use 'which' for things/places. Better: 'the café which we studied in'."
       },
-      {
-        s1:"I spoke to a receptionist.", s2:"She explained everything clearly.",
+
+      // 5: correct = C
+      { s1:"I spoke to a receptionist.", s2:"She explained everything clearly.",
         options:[
           "I spoke to a receptionist which explained everything clearly.",
-          "I spoke to a receptionist who explained everything clearly.",
-          "I spoke to a receptionist who she explained everything clearly."
+          "I spoke to a receptionist who she explained everything clearly.",
+          "I spoke to a receptionist who explained everything clearly."
         ],
-        correctIndex: 1,
-        explanation:"Receptionist = person → 'who'. Don’t repeat 'she'."
+        correctIndex:2, explanation:"Receptionist = person → 'who'. Don’t repeat 'she'."
       },
-      {
-        s1:"The shoes are uncomfortable.", s2:"I wore them on Monday.",
+
+      // 6: correct = B
+      { s1:"The shoes are uncomfortable.", s2:"I wore them on Monday.",
         options:[
-          "The shoes who I wore on Monday are uncomfortable.",
+          "The shoes which I wore them on Monday are uncomfortable.",
           "The shoes which I wore on Monday are uncomfortable.",
-          "The shoes which I wore them on Monday are uncomfortable."
+          "The shoes who I wore on Monday are uncomfortable."
         ],
-        correctIndex: 1,
-        explanation:"Shoes = things → 'which'. Don’t repeat 'them'."
+        correctIndex:1, explanation:"Shoes = things → 'which'. Don’t repeat 'them'."
       },
-      {
-        s1:"We thanked the coach.", s2:"He stayed after training to help us.",
+
+      // 7: correct = A
+      { s1:"We thanked the coach.", s2:"He stayed after training to help us.",
         options:[
-          "We thanked the coach which stayed after training to help us.",
           "We thanked the coach who stayed after training to help us.",
+          "We thanked the coach which stayed after training to help us.",
           "We thanked the coach who he stayed after training to help us."
         ],
-        correctIndex: 1,
-        explanation:"Coach = person → 'who'. Don’t repeat 'he'."
+        correctIndex:0, explanation:"Coach = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1:"The documentary was amazing.", s2:"We watched it in the lesson.",
+
+      // 8: correct = C
+      { s1:"The documentary was amazing.", s2:"We watched it in the lesson.",
         options:[
+          "The documentary which we watched it in the lesson was amazing.",
           "The documentary who we watched in the lesson was amazing.",
-          "The documentary which we watched in the lesson was amazing.",
-          "The documentary which we watched it in the lesson was amazing."
+          "The documentary which we watched in the lesson was amazing."
         ],
-        correctIndex: 1,
-        explanation:"Documentary = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:2, explanation:"Documentary = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1:"This is the friend.", s2:"I told you about her yesterday.",
+
+      // 9: correct = B
+      { s1:"This is the friend.", s2:"I told you about her yesterday.",
         options:[
-          "This is the friend which I told you about her yesterday.",
+          "This is the friend who I told you about her yesterday.",
           "This is the friend who I told you about yesterday.",
-          "This is the friend who I told you about her yesterday."
+          "This is the friend which I told you about her yesterday."
         ],
-        correctIndex: 1,
-        explanation:"Friend = person → 'who'. Don’t repeat 'her'."
+        correctIndex:1, explanation:"Friend = person → 'who'. Don’t repeat 'her'."
       },
-      {
-        s1:"The street is noisy at night.", s2:"My grandparents live on it.",
+
+      // 10: correct = A
+      { s1:"The street is noisy at night.", s2:"My grandparents live on it.",
         options:[
-          "The street who my grandparents live on is noisy at night.",
           "The street which my grandparents live on is noisy at night.",
+          "The street who my grandparents live on is noisy at night.",
           "The street which my grandparents live on it is noisy at night."
         ],
-        correctIndex: 1,
-        explanation:"Street = place/thing → 'which'. Don’t repeat 'it'."
+        correctIndex:0, explanation:"Street = place/thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1:"I know a driver.", s2:"He never uses his phone while driving.",
+
+      // 11: correct = C
+      { s1:"I know a driver.", s2:"He never uses his phone while driving.",
         options:[
           "I know a driver which never uses his phone while driving.",
-          "I know a driver who never uses his phone while driving.",
-          "I know a driver who he never uses his phone while driving."
+          "I know a driver who he never uses his phone while driving.",
+          "I know a driver who never uses his phone while driving."
         ],
-        correctIndex: 1,
-        explanation:"Driver = person → 'who'. Don’t repeat 'he'."
+        correctIndex:2, explanation:"Driver = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1:"The app is very useful.", s2:"It reminds me to drink water.",
+
+      // 12: correct = B
+      { s1:"The app is very useful.", s2:"It reminds me to drink water.",
         options:[
-          "The app who reminds me to drink water is very useful.",
+          "The app which it reminds me to drink water is very useful.",
           "The app which reminds me to drink water is very useful.",
-          "The app which it reminds me to drink water is very useful."
+          "The app who reminds me to drink water is very useful."
         ],
-        correctIndex: 1,
-        explanation:"App = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"App = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1:"That’s the manager.", s2:"Everyone trusts him.",
+
+      // 13: correct = A
+      { s1:"That’s the manager.", s2:"Everyone trusts him.",
         options:[
-          "That’s the manager which everyone trusts him.",
           "That’s the manager who everyone trusts.",
-          "That’s the manager who everyone trusts him."
+          "That’s the manager who everyone trusts him.",
+          "That’s the manager which everyone trusts him."
         ],
-        correctIndex: 1,
-        explanation:"Manager = person → 'who'. Don’t repeat 'him'."
+        correctIndex:0, explanation:"Manager = person → 'who'. Don’t repeat 'him'."
       },
-      {
-        s1:"The jacket is too small.", s2:"I ordered it online.",
+
+      // 14: correct = C
+      { s1:"The jacket is too small.", s2:"I ordered it online.",
         options:[
           "The jacket who I ordered online is too small.",
-          "The jacket which I ordered online is too small.",
-          "The jacket which I ordered it online is too small."
+          "The jacket which I ordered it online is too small.",
+          "The jacket which I ordered online is too small."
         ],
-        correctIndex: 1,
-        explanation:"Jacket = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:2, explanation:"Jacket = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1:"I saw a woman.", s2:"She was looking for her child.",
+
+      // 15: correct = B
+      { s1:"I saw a woman.", s2:"She was looking for her child.",
         options:[
-          "I saw a woman which was looking for her child.",
+          "I saw a woman who she was looking for her child.",
           "I saw a woman who was looking for her child.",
-          "I saw a woman who she was looking for her child."
+          "I saw a woman which was looking for her child."
         ],
-        correctIndex: 1,
-        explanation:"Woman = person → 'who'. Don’t repeat 'she'."
+        correctIndex:1, explanation:"Woman = person → 'who'. Don’t repeat 'she'."
       },
-      {
-        s1:"The room was too cold.", s2:"We had the meeting there.",
+
+      // 16: correct = A
+      { s1:"The room was too cold.", s2:"We had the meeting there.",
         options:[
-          "The room who we had the meeting there was too cold.",
+          "The room which we had the meeting in was too cold.",
           "The room which we had the meeting there was too cold.",
-          "The room which we had the meeting in was too cold."
+          "The room who we had the meeting there was too cold."
         ],
-        correctIndex: 2,
-        explanation:"Room = place/thing → 'which'. Better: 'the room which we had the meeting in'."
+        correctIndex:0, explanation:"Room = place/thing → 'which'. Better: 'the room which we had the meeting in'."
       },
-      {
-        s1:"He’s the scientist.", s2:"He discovered a new medicine.",
+
+      // 17: correct = C
+      { s1:"He’s the scientist.", s2:"He discovered a new medicine.",
         options:[
           "He’s the scientist which discovered a new medicine.",
-          "He’s the scientist who discovered a new medicine.",
-          "He’s the scientist who he discovered a new medicine."
+          "He’s the scientist who he discovered a new medicine.",
+          "He’s the scientist who discovered a new medicine."
         ],
-        correctIndex: 1,
-        explanation:"Scientist = person → 'who'. Don’t repeat 'he'."
+        correctIndex:2, explanation:"Scientist = person → 'who'. Don’t repeat 'he'."
       },
-      {
-        s1:"The photo looks great.", s2:"You took it during the trip.",
+
+      // 18: correct = B
+      { s1:"The photo looks great.", s2:"You took it during the trip.",
         options:[
-          "The photo who you took during the trip looks great.",
+          "The photo which you took it during the trip looks great.",
           "The photo which you took during the trip looks great.",
-          "The photo which you took it during the trip looks great."
+          "The photo who you took during the trip looks great."
         ],
-        correctIndex: 1,
-        explanation:"Photo = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:1, explanation:"Photo = thing → 'which'. Don’t repeat 'it'."
       },
-      {
-        s1:"That’s the student.", s2:"The teacher chose her for the team.",
+
+      // 19: correct = A
+      { s1:"That’s the student.", s2:"The teacher chose her for the team.",
         options:[
-          "That’s the student which the teacher chose her for the team.",
           "That’s the student who the teacher chose for the team.",
-          "That’s the student who the teacher chose her for the team."
+          "That’s the student who the teacher chose her for the team.",
+          "That’s the student which the teacher chose her for the team."
         ],
-        correctIndex: 1,
-        explanation:"Student = person → 'who'. Don’t repeat 'her'."
+        correctIndex:0, explanation:"Student = person → 'who'. Don’t repeat 'her'."
       },
-      {
-        s1:"The chair is still wet.", s2:"Someone cleaned it.",
+
+      // 20: correct = C
+      { s1:"The chair is still wet.", s2:"Someone cleaned it.",
         options:[
+          "The chair which someone cleaned it is still wet.",
           "The chair who someone cleaned is still wet.",
-          "The chair which someone cleaned is still wet.",
-          "The chair which someone cleaned it is still wet."
+          "The chair which someone cleaned is still wet."
         ],
-        correctIndex: 1,
-        explanation:"Chair = thing → 'which'. Don’t repeat 'it'."
+        correctIndex:2, explanation:"Chair = thing → 'which'. Don’t repeat 'it'."
       }
     ];
 
     // ----------------------------
-    // RANDOMIZE OPTIONS (stable per attempt)
-    // Also tries to make correct letters balanced (not all A/B/C).
-    // ----------------------------
-    function shuffleInPlace(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
-
-    function prepareAttemptQuestions(base) {
-      // We will try multiple shuffles to avoid "all correct = same letter"
-      // and keep distribution reasonably balanced.
-      const TARGET_MAX_DIFF = 2; // with 20 questions, good balance is around 6-7 each
-      const MAX_TRIES = 200;
-
-      let best = null;
-      let bestScore = Infinity;
-
-      for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
-        const prepared = base.map(q => {
-          const correctText = q.options[q.correctIndex];
-          const opts = q.options.slice();
-          shuffleInPlace(opts);
-          const newCorrectIndex = opts.indexOf(correctText);
-          return {
-            s1: q.s1,
-            s2: q.s2,
-            options: opts,
-            correctIndex: newCorrectIndex,
-            explanation: q.explanation
-          };
-        });
-
-        const counts = [0,0,0];
-        for (const q of prepared) counts[q.correctIndex]++;
-
-        const maxC = Math.max(...counts);
-        const minC = Math.min(...counts);
-        const diff = maxC - minC;
-
-        // Score = how unbalanced it is (lower is better)
-        const unbalanceScore = diff;
-
-        // perfect/acceptable
-        if (diff <= TARGET_MAX_DIFF) return prepared;
-
-        // keep best fallback
-        if (unbalanceScore < bestScore) {
-          bestScore = unbalanceScore;
-          best = prepared;
-        }
-      }
-
-      // fallback if not found (rare)
-      return best || base;
-    }
-
-    // ----------------------------
     // STATE
     // ----------------------------
-    let questions = []; // <-- prepared questions for THIS attempt
     let currentQuestion = 0;
     let score = 0;
 
-    // per-question state
-    const qState = []; // will be built after questions are prepared
+    const qState = questions.map(() => ({ selectedIndex: null, expired: false, timeSpent: 0 }));
 
     let timerInterval = null;
     let timeLeft = TIME_PER_QUESTION;
 
-    // violations
     let violations = 0;
     let lastViolationAt = 0;
     const violationLog = [];
@@ -462,7 +399,6 @@
     const timerEl = document.getElementById("timer");
     const violationsEl = document.getElementById("violations");
 
-    // overlay
     const violationOverlay = document.getElementById("violationOverlay");
     const violationReasonEl = document.getElementById("violationReason");
     const violationCountText = document.getElementById("violationCountText");
@@ -472,8 +408,17 @@
     violationMaxText.textContent = String(MAX_VIOLATIONS);
 
     // ----------------------------
-    // UI HELPERS
+    // HELPERS
     // ----------------------------
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     function setTestUIVisible(isVisible) {
       statsBar.style.display = isVisible ? "flex" : "none";
       progressWrap.style.display = isVisible ? "block" : "none";
@@ -481,17 +426,21 @@
     }
 
     function updateScoreDisplay() {
-      scoreDisplay.textContent = `${score}/${questions.length || 20}`;
+      scoreDisplay.textContent = `${score}/${questions.length}`;
     }
 
     function updateProgressDisplay() {
-      const total = questions.length || 20;
       const progress = currentQuestion + 1;
-      const percent = Math.round((progress / total) * 100);
-      progressDisplay.textContent = `${progress}/${total}`;
+      const percent = Math.round((progress / questions.length) * 100);
+      progressDisplay.textContent = `${progress}/${questions.length}`;
       currentQuestionNum.textContent = progress;
       progressPercent.textContent = `${percent}%`;
       progressFill.style.width = `${percent}%`;
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
     }
 
     function updateTimerUI() {
@@ -500,19 +449,15 @@
       else timerEl.parentElement.classList.remove("ring-2", "ring-white/60");
     }
 
-    function stopTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = null;
-    }
-
     function startTimerIfNeeded() {
       stopTimer();
+
       if (!testStarted || testFinished) return;
 
       const st = qState[currentQuestion];
-      if (!st || st.selectedIndex !== null || st.expired) {
-        timeLeft = st ? Math.max(0, TIME_PER_QUESTION - st.timeSpent) : TIME_PER_QUESTION;
-        if (st && st.expired) timeLeft = 0;
+      if (st.selectedIndex !== null || st.expired) {
+        timeLeft = Math.max(0, TIME_PER_QUESTION - st.timeSpent);
+        if (st.expired) timeLeft = 0;
         updateTimerUI();
         return;
       }
@@ -537,7 +482,8 @@
 
     function handleTimeout() {
       const st = qState[currentQuestion];
-      if (!st || st.selectedIndex !== null || st.expired) return;
+      if (st.selectedIndex !== null || st.expired) return;
+
       st.expired = true;
       renderQuestion();
       showFeedback(false, "Time is up! Move to the next question.");
@@ -603,11 +549,6 @@
     window.addEventListener("pagehide", () => {
       registerViolation("You left the page.");
     });
-    document.addEventListener("copy", (e) => {
-      if (!testStarted || testFinished) return;
-      e.preventDefault();
-      registerViolation("Copy action detected.");
-    });
 
     violationOkBtn.addEventListener("click", () => {
       if (violations >= MAX_VIOLATIONS) endTest(true);
@@ -630,6 +571,16 @@
       violations = 0;
       violationLog.length = 0;
       updateViolationsUI();
+
+      // reset state (in case new student)
+      currentQuestion = 0;
+      score = 0;
+      for (const st of qState) {
+        st.selectedIndex = null;
+        st.expired = false;
+        st.timeSpent = 0;
+      }
+      updateScoreDisplay();
 
       questionContainer.innerHTML = `
         <div class="max-w-xl mx-auto fade-in">
@@ -679,10 +630,6 @@
               </button>
             </div>
           </div>
-
-          <p class="text-center text-sm text-gray-500 mt-4">
-            Tip: Don’t switch apps or tabs during the test.
-          </p>
         </div>
       `;
 
@@ -711,21 +658,8 @@
         errEl.classList.add("hidden");
 
         student = { name, group, level };
-
-        // ✅ Prepare attempt questions with randomized option letters (balanced)
-        questions = prepareAttemptQuestions(baseQuestions);
-
-        // Reset test state
-        currentQuestion = 0;
-        score = 0;
-
-        qState.length = 0;
-        for (let i = 0; i < questions.length; i++) {
-          qState.push({ selectedIndex: null, expired: false, timeSpent: 0 });
-        }
-
-        updateScoreDisplay();
         subtitle.textContent = `Student: ${student.name} • ${student.group} • ${student.level}`;
+
         renderStartAnimation();
       });
     }
@@ -774,7 +708,7 @@
               <div class="text-gray-700">
                 <div class="font-semibold">Rules</div>
                 <div class="text-sm leading-relaxed">
-                  Don’t switch tabs/apps. Each switch counts as a violation. After <b>${MAX_VIOLATIONS}</b> violations, the test is submitted.
+                  Don’t switch tabs/apps. After <b>${MAX_VIOLATIONS}</b> violations, the test is submitted.
                 </div>
               </div>
             </div>
@@ -788,12 +722,14 @@
       setTimeout(() => {
         testStarted = true;
         setTestUIVisible(true);
+        updateScoreDisplay();
+        updateProgressDisplay();
         renderQuestion();
       }, 3300);
     }
 
     // ----------------------------
-    // TEST RENDER
+    // RENDER QUESTION
     // ----------------------------
     function renderQuestion() {
       const q = questions[currentQuestion];
@@ -839,10 +775,7 @@
 
         const letter = String.fromCharCode(65 + idx);
         html += `
-          <button type="button"
-            class="${optionClass}"
-            data-option-index="${idx}"
-            ${answered ? "disabled" : ""}>
+          <button type="button" class="${optionClass}" data-option-index="${idx}" ${answered ? "disabled" : ""}>
             <div class="flex items-start">
               <div class="shrink-0 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 font-bold">
                 ${letter}
@@ -881,8 +814,7 @@
       html += `</div>`;
       questionContainer.innerHTML = html;
 
-      const optionsEl = document.getElementById("options");
-      optionsEl.addEventListener("click", (e) => {
+      document.getElementById("options").addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-option-index]");
         if (!btn) return;
         selectOption(Number(btn.dataset.optionIndex));
@@ -914,6 +846,7 @@
 
     function showFeedback(isCorrect, explanation) {
       feedback.classList.remove("hidden");
+
       if (isCorrect) {
         feedback.className = "mt-6 p-4 rounded-lg border bg-green-50 border-green-200";
         feedback.innerHTML = `
@@ -965,7 +898,7 @@
     });
 
     // ----------------------------
-    // FINISH PAGE
+    // FINISH PAGE (rewarding)
     // ----------------------------
     function getPerformance(score, total) {
       const pct = Math.round((score / total) * 100);
@@ -1009,16 +942,6 @@
       return qState.filter(q => q.expired).length;
     }
 
-    async function sendResultsToServer(payload) {
-      try {
-        await fetch("/api/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {}
-    }
-
     async function endTest(forced) {
       if (testFinished) return;
       testFinished = true;
@@ -1028,21 +951,6 @@
       const total = questions.length;
       const percentage = Math.round((score / total) * 100);
       const perf = getPerformance(score, total);
-
-      const payload = {
-        test: "WHO/WHICH Relative Clauses",
-        student,
-        score,
-        total,
-        percentage,
-        forced_submit: !!forced,
-        violations,
-        violationLog,
-        expired_count: countExpired(),
-        question_state: qState,
-        timestamp: new Date().toISOString()
-      };
-      sendResultsToServer(payload);
 
       const forcedNote = forced
         ? `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-left">
@@ -1119,18 +1027,6 @@
         nextBtn.style.display = "";
         renderLogin();
       });
-    }
-
-    // ----------------------------
-    // ESCAPE HTML
-    // ----------------------------
-    function escapeHtml(str) {
-      return String(str || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
     }
 
     // ----------------------------
