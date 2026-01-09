@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WHO/WHICH Relative Clauses Test</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    .option-correct { background-color: #d1fae5 !important; border-color: #10b981 !important; }
+    .option-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+    .progress-bar { height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background-color: #3b82f6; transition: width 0.25s ease; }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center min-h-screen p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold">WHO/WHICH Relative Clauses Test</h1>
+          <div class="flex items-center mt-2">
+            <i class="fas fa-graduation-cap mr-2"></i>
+            <span>Combine two sentences into one</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
+            <div class="text-sm">Score</div>
+            <div class="text-xl font-bold" id="score">0/20</div>
+          </div>
+          <div class="text-center bg-blue-800 bg-opacity-30 px-4 py-2 rounded-lg">
+            <div class="text-sm">Progress</div>
+            <div class="text-xl font-bold" id="progress">1/20</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="flex justify-between text-sm mb-1">
+          <span>Question <span id="current-question-num">1</span> of 20</span>
+          <span id="progress-percent">5%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 5%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div id="question-container" class="mb-6"></div>
+
+      <div id="feedback" class="mt-6 p-4 rounded-lg border hidden"></div>
+
+      <div class="flex flex-col sm:flex-row justify-between mt-8 gap-4">
+        <button id="prev-btn"
+          class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-5 py-3 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          disabled>
+          <i class="fas fa-arrow-left mr-2"></i> Previous
+        </button>
+
+        <button id="next-btn"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-3 rounded-lg transition duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+          Next Question <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 20 natural / logical items, with ONE correct answer each (who=people, which=things).
+    const questions = [
+      {
+        s1: "I have a neighbour.",
+        s2: "He always helps people carry heavy bags.",
+        options: [
+          "I have a neighbour which always helps people carry heavy bags.",
+          "I have a neighbour who always helps people carry heavy bags.",
+          "I have a neighbour who he always helps people carry heavy bags."
+        ],
+        correctIndex: 1,
+        explanation: "Use 'who' for people. Don't repeat the pronoun (NOT: 'who he')."
+      },
+      {
+        s1: "I can’t find the message.",
+        s2: "You sent it this morning.",
+        options: [
+          "I can’t find the message who you sent this morning.",
+          "I can’t find the message which you sent this morning.",
+          "I can’t find the message which you sent it this morning."
+        ],
+        correctIndex: 1,
+        explanation: "Use 'which' for things. Don’t repeat the object pronoun (NOT: 'sent it')."
+      },
+      {
+        s1: "That’s the student.",
+        s2: "She asks the best questions in class.",
+        options: [
+          "That’s the student which asks the best questions in class.",
+          "That’s the student who asks the best questions in class.",
+          "That’s the student who she asks the best questions in class."
+        ],
+        correctIndex: 1,
+        explanation: "Use 'who' for people, and don’t repeat the subject (NOT: 'who she')."
+      },
+      {
+        s1: "The café is usually full.",
+        s2: "We studied there last week.",
+        options: [
+          "The café who we studied there last week is usually full.",
+          "The café which we studied in last week is usually full.",
+          "The café which we studied there last week is usually full."
+        ],
+        correctIndex: 1,
+        explanation: "Use 'which' for places/things. In a relative clause, avoid 'there' here; use 'studied in'."
+      },
+      {
+        s1: "I spoke to a receptionist.",
+        s2: "She explained everything clearly.",
+        options: [
+          "I spoke to a receptionist which explained everything clearly.",
+          "I spoke to a receptionist who explained everything clearly.",
+          "I spoke to a receptionist who she explained everything clearly."
+        ],
+        correctIndex: 1,
+        explanation: "Receptionist = person → 'who'. Don’t repeat 'she'."
+      },
+      {
+        s1: "The shoes are uncomfortable.",
+        s2: "I wore them on Monday.",
+        options: [
+          "The shoes who I wore on Monday are uncomfortable.",
+          "The shoes which I wore on Monday are uncomfortable.",
+          "The shoes which I wore them on Monday are uncomfortable."
+        ],
+        correctIndex: 1,
+        explanation: "Shoes = things → 'which'. Don’t repeat 'them'."
+      },
+      {
+        s1: "We thanked the coach.",
+        s2: "He stayed after training to help us.",
+        options: [
+          "We thanked the coach which stayed after training to help us.",
+          "We thanked the coach who stayed after training to help us.",
+          "We thanked the coach who he stayed after training to help us."
+        ],
+        correctIndex: 1,
+        explanation: "Coach = person → 'who'. Don’t repeat 'he'."
+      },
+      {
+        s1: "The documentary was amazing.",
+        s2: "We watched it in the lesson.",
+        options: [
+          "The documentary who we watched in the lesson was amazing.",
+          "The documentary which we watched in the lesson was amazing.",
+          "The documentary which we watched it in the lesson was amazing."
+        ],
+        correctIndex: 1,
+        explanation: "Documentary = thing → 'which'. Don’t repeat 'it'."
+      },
+      {
+        s1: "This is the friend.",
+        s2: "I told you about her yesterday.",
+        options: [
+          "This is the friend which I told you about her yesterday.",
+          "This is the friend who I told you about yesterday.",
+          "This is the friend who I told you about her yesterday."
+        ],
+        correctIndex: 1,
+        explanation: "Friend = person → 'who'. Don’t repeat 'her'."
+      },
+      {
+        s1: "The street is noisy at night.",
+        s2: "My grandparents live on it.",
+        options: [
+          "The street who my grandparents live on is noisy at night.",
+          "The street which my grandparents live on is noisy at night.",
+          "The street which my grandparents live on it is noisy at night."
+        ],
+        correctIndex: 1,
+        explanation: "Street = thing/place → 'which'. Don’t repeat 'it'."
+      },
+      {
+        s1: "I know a driver.",
+        s2: "He never uses his phone while driving.",
+        options: [
+          "I know a driver which never uses his phone while driving.",
+          "I know a driver who never uses his phone while driving.",
+          "I know a driver who he never uses his phone while driving."
+        ],
+        correctIndex: 1,
+        explanation: "Driver = person → 'who'. Don’t repeat 'he'."
+      },
+      {
+        s1: "The app is very useful.",
+        s2: "It reminds me to drink water.",
+        options: [
+          "The app who reminds me to drink water is very useful.",
+          "The app which reminds me to drink water is very useful.",
+          "The app which it reminds me to drink water is very useful."
+        ],
+        correctIndex: 1,
+        explanation: "App = thing → 'which'. Don’t repeat 'it'."
+      },
+      {
+        s1: "That’s the manager.",
+        s2: "Everyone trusts him.",
+        options: [
+          "That’s the manager which everyone trusts him.",
+          "That’s the manager who everyone trusts.",
+          "That’s the manager who everyone trusts him."
+        ],
+        correctIndex: 1,
+        explanation: "Manager = person → 'who'. Don’t repeat 'him'."
+      },
+      {
+        s1: "The jacket is too small.",
+        s2: "I ordered it online.",
+        options: [
+          "The jacket who I ordered online is too small.",
+          "The jacket which I ordered online is too small.",
+          "The jacket which I ordered it online is too small."
+        ],
+        correctIndex: 1,
+        explanation: "Jacket = thing → 'which'. Don’t repeat 'it'."
+      },
+      {
+        s1: "I saw a woman.",
+        s2: "She was looking for her child.",
+        options: [
+          "I saw a woman which was looking for her child.",
+          "I saw a woman who was looking for her child.",
+          "I saw a woman who she was looking for her child."
+        ],
+        correctIndex: 1,
+        explanation: "Woman = person → 'who'. Don’t repeat 'she'."
+      },
+      {
+        s1: "The room was too cold.",
+        s2: "We had the meeting there.",
+        options: [
+          "The room who we had the meeting there was too cold.",
+          "The room which we had the meeting there was too cold.",
+          "The room which we had the meeting in was too cold."
+        ],
+        correctIndex: 2,
+        explanation: "Room = thing/place → 'which'. Use 'meeting in' (avoid 'there' in the relative clause)."
+      },
+      {
+        s1: "He’s the scientist.",
+        s2: "He discovered a new medicine.",
+        options: [
+          "He’s the scientist which discovered a new medicine.",
+          "He’s the scientist who discovered a new medicine.",
+          "He’s the scientist who he discovered a new medicine."
+        ],
+        correctIndex: 1,
+        explanation: "Scientist = person → 'who'. Don’t repeat 'he'."
+      },
+      {
+        s1: "The photo looks great.",
+        s2: "You took it during the trip.",
+        options: [
+          "The photo who you took during the trip looks great.",
+          "The photo which you took during the trip looks great.",
+          "The photo which you took it during the trip looks great."
+        ],
+        correctIndex: 1,
+        explanation: "Photo = thing → 'which'. Don’t repeat 'it'."
+      },
+      {
+        s1: "That’s the student.",
+        s2: "The teacher chose her for the team.",
+        options: [
+          "That’s the student which the teacher chose her for the team.",
+          "That’s the student who the teacher chose for the team.",
+          "That’s the student who the teacher chose her for the team."
+        ],
+        correctIndex: 1,
+        explanation: "Student = person → 'who'. Don’t repeat 'her'."
+      },
+      {
+        s1: "The chair is still wet.",
+        s2: "Someone cleaned it.",
+        options: [
+          "The chair who someone cleaned is still wet.",
+          "The chair which someone cleaned is still wet.",
+          "The chair which someone cleaned it is still wet."
+        ],
+        correctIndex: 1,
+        explanation: "Chair = thing → 'which'. Don’t repeat 'it'."
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    // store selected option index (0/1/2) per question
+    const userAnswers = new Array(questions.length).fill(null);
+
+    const questionContainer = document.getElementById("question-container");
+    const feedback = document.getElementById("feedback");
+    const scoreDisplay = document.getElementById("score");
+    const progressDisplay = document.getElementById("progress");
+    const currentQuestionNum = document.getElementById("current-question-num");
+    const progressPercent = document.getElementById("progress-percent");
+    const progressFill = document.getElementById("progress-fill");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function updateScoreDisplay() {
+      scoreDisplay.textContent = `${score}/${questions.length}`;
+    }
+
+    function updateProgressDisplay() {
+      const progress = currentQuestion + 1;
+      const percent = Math.round((progress / questions.length) * 100);
+      progressDisplay.textContent = `${progress}/${questions.length}`;
+      currentQuestionNum.textContent = progress;
+      progressPercent.textContent = `${percent}%`;
+      progressFill.style.width = `${percent}%`;
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestion];
+      const answered = userAnswers[currentQuestion] !== null;
+
+      let html = `
+        <div class="mb-6">
+          <div class="flex items-center mb-2">
+            <div class="bg-blue-100 text-blue-800 font-semibold rounded-full w-8 h-8 flex items-center justify-center mr-3">
+              ${currentQuestion + 1}
+            </div>
+            <h2 class="text-xl font-bold text-gray-800">Combine the Sentences</h2>
+          </div>
+
+          <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 mb-6">
+            <p class="text-gray-800 text-lg leading-relaxed">
+              <span class="font-semibold">1)</span> ${q.s1}<br/>
+              <span class="font-semibold">2)</span> ${q.s2}
+            </p>
+          </div>
+
+          <div class="space-y-4 mb-2" id="options">
+      `;
+
+      q.options.forEach((text, idx) => {
+        const isCorrect = idx === q.correctIndex;
+        const isUser = userAnswers[currentQuestion] === idx;
+
+        let optionClass = "p-4 border-2 rounded-xl transition duration-200 w-full text-left ";
+        if (!answered) {
+          optionClass += "bg-white border-gray-300 hover:border-blue-400 hover:bg-blue-50 active:scale-[0.99]";
+        } else {
+          if (isCorrect) optionClass += "option-correct border-green-400 ";
+          else if (isUser && !isCorrect) optionClass += "option-incorrect border-red-300 ";
+          else optionClass += "bg-gray-50 border-gray-200 opacity-80 ";
+        }
+
+        const letter = String.fromCharCode(65 + idx);
+        html += `
+          <button type="button"
+            class="${optionClass}"
+            data-option-index="${idx}"
+            ${answered ? "disabled" : ""}>
+            <div class="flex items-start">
+              <div class="shrink-0 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center mr-3 font-bold">
+                ${letter}
+              </div>
+              <div class="font-medium text-gray-900 leading-relaxed">${text}</div>
+            </div>
+          </button>
+        `;
+      });
+
+      html += `
+          </div>
+      `;
+
+      if (answered) {
+        html += `
+          <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
+            <div class="flex items-center mb-2">
+              <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+              <h3 class="font-semibold text-gray-800">Explanation</h3>
+            </div>
+            <p class="text-gray-700 leading-relaxed">${q.explanation}</p>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      questionContainer.innerHTML = html;
+
+      // attach listeners (safe + mobile-friendly)
+      const optionsEl = document.getElementById("options");
+      optionsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-option-index]");
+        if (!btn) return;
+        const idx = Number(btn.dataset.optionIndex);
+        selectOption(idx);
+      });
+
+      prevBtn.disabled = currentQuestion === 0;
+      nextBtn.textContent = currentQuestion === questions.length - 1 ? "Submit Test" : "Next Question";
+      nextBtn.disabled = userAnswers[currentQuestion] === null;
+
+      updateProgressDisplay();
+    }
+
+    function selectOption(idx) {
+      if (userAnswers[currentQuestion] !== null) return;
+
+      userAnswers[currentQuestion] = idx;
+      const q = questions[currentQuestion];
+      const isCorrect = idx === q.correctIndex;
+
+      if (isCorrect) score++;
+
+      updateScoreDisplay();
+      renderQuestion();
+      showFeedback(isCorrect, q.explanation);
+    }
+
+    function showFeedback(isCorrect, explanation) {
+      feedback.classList.remove("hidden");
+
+      if (isCorrect) {
+        feedback.className = "mt-6 p-4 rounded-lg border bg-green-50 border-green-200";
+        feedback.innerHTML = `
+          <div class="flex items-center">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+              <i class="fas fa-check text-green-600"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-green-800">Correct!</h3>
+              <p class="text-green-700 leading-relaxed">${explanation}</p>
+            </div>
+          </div>
+        `;
+      } else {
+        feedback.className = "mt-6 p-4 rounded-lg border bg-red-50 border-red-200";
+        feedback.innerHTML = `
+          <div class="flex items-center">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+              <i class="fas fa-times text-red-600"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-red-800">Incorrect</h3>
+              <p class="text-red-700 leading-relaxed">${explanation}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      feedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+        feedback.classList.add("hidden");
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+        feedback.classList.add("hidden");
+      } else {
+        endTest();
+      }
+    });
+
+    function getPraiseMessage(score) {
+      if (score >= 18) return "Excellent! You understand relative clauses very well!";
+      if (score >= 15) return "Very good! You know most of the rules.";
+      if (score >= 12) return "Good job! You understand the basics.";
+      if (score >= 9) return "Not bad! Review the explanations to improve.";
+      return "Keep practicing! Review WHO/WHICH rules and pronoun repetition mistakes.";
+    }
+
+    async function sendResultsToServer() {
+      // Optional: send to Vercel API. If API env vars are set, it can forward to Telegram.
+      try {
+        const payload = {
+          test: "WHO/WHICH Relative Clauses",
+          score,
+          total: questions.length,
+          percentage: Math.round((score / questions.length) * 100),
+          answers: userAnswers,
+          timestamp: new Date().toISOString()
+        };
+
+        await fetch("/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        // Silent fail - test should work even without backend
+      }
+    }
+
+    async function endTest() {
+      const percentage = Math.round((score / questions.length) * 100);
+
+      // fire-and-forget
+      sendResultsToServer();
+
+      const html = `
+        <div class="text-center py-8">
+          <div class="mb-6">
+            <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+              <i class="fas fa-trophy text-white text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Test Complete!</h2>
+            <p class="text-gray-600">You’ve finished the WHO/WHICH Relative Clauses test.</p>
+          </div>
+
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 max-w-md mx-auto mb-8">
+            <div class="text-5xl font-bold text-blue-600 mb-2">${percentage}%</div>
+            <div class="text-xl font-semibold text-gray-800 mb-1">${score}/${questions.length} Correct</div>
+            <div class="text-lg text-blue-500 font-medium mb-4">${getPraiseMessage(score)}</div>
+          </div>
+
+          <button onclick="location.reload()"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center mx-auto">
+            <i class="fas fa-sync-alt mr-2"></i> Restart Test
+          </button>
+        </div>
+      `;
+
+      questionContainer.innerHTML = html;
+      prevBtn.style.display = "none";
+      nextBtn.style.display = "none";
+      feedback.classList.add("hidden");
+    }
+
+    // init
+    updateScoreDisplay();
+    renderQuestion();
+  </script>
+</body>
+</html>
